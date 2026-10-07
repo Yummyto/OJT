@@ -1,0 +1,295 @@
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { itemsAPI, borrowAPI, bookingsAPI } from '../../services/api';
+import {
+  ArrowLeft, Package, MapPin, CheckCircle, XCircle,
+  Calendar, ClipboardList, ChevronLeft, ChevronRight
+} from 'lucide-react';
+import Modal from '../../components/Modal';
+import toast from 'react-hot-toast';
+
+export default function ItemDetails() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [item, setItem] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [currentImage, setCurrentImage] = useState(0);
+  const [borrowModal, setBorrowModal] = useState(false);
+  const [bookingModal, setBookingModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [borrowForm, setBorrowForm] = useState({
+    student_id: '', student_name: '', student_email: '',
+    student_department: '', purpose: '', quantity: 1,
+    borrow_date: '', expected_return_date: ''
+  });
+
+  const [bookingForm, setBookingForm] = useState({
+    student_id: '', student_name: '', student_email: '',
+    student_department: '', purpose: '', quantity: 1,
+    start_date: '', end_date: ''
+  });
+
+  useEffect(() => {
+    loadItem();
+  }, [id]);
+
+  const loadItem = async () => {
+    try {
+      const { data } = await itemsAPI.getById(id);
+      setItem(data);
+    } catch (err) {
+      toast.error('Item not found');
+      navigate('/');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBorrow = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await borrowAPI.create({ ...borrowForm, item_id: id });
+      toast.success('Borrow request submitted! Please wait for admin approval.');
+      setBorrowModal(false);
+      setBorrowForm({ student_id: '', student_name: '', student_email: '', student_department: '', purpose: '', quantity: 1, borrow_date: '', expected_return_date: '' });
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to submit request');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleBooking = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await bookingsAPI.create({ ...bookingForm, item_id: id });
+      toast.success('Booking submitted! Please wait for admin approval.');
+      setBookingModal(false);
+      setBookingForm({ student_id: '', student_name: '', student_email: '', student_department: '', purpose: '', quantity: 1, start_date: '', end_date: '' });
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to submit booking');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="page-loading"><div className="loading-spinner" /><p>Loading item...</p></div>;
+  }
+
+  if (!item) return null;
+
+  const images = item.images?.length > 0 ? item.images : [];
+  const customFields = item.categories?.custom_fields || [];
+
+  return (
+    <div className="item-details-page">
+      <button className="back-btn" onClick={() => navigate('/')}>
+        <ArrowLeft size={18} /> Back to Browse
+      </button>
+
+      <div className="item-details-grid">
+        {/* Image Gallery */}
+        <div className="item-gallery">
+          <div className="gallery-main">
+            {images.length > 0 ? (
+              <>
+                <img src={images[currentImage]} alt={item.name} />
+                {images.length > 1 && (
+                  <>
+                    <button className="gallery-nav prev" onClick={() => setCurrentImage(i => i > 0 ? i - 1 : images.length - 1)}>
+                      <ChevronLeft size={20} />
+                    </button>
+                    <button className="gallery-nav next" onClick={() => setCurrentImage(i => i < images.length - 1 ? i + 1 : 0)}>
+                      <ChevronRight size={20} />
+                    </button>
+                  </>
+                )}
+              </>
+            ) : (
+              <div className="image-placeholder large">
+                <Package size={64} />
+                <p>No image available</p>
+              </div>
+            )}
+          </div>
+          {images.length > 1 && (
+            <div className="gallery-thumbs">
+              {images.map((img, i) => (
+                <button
+                  key={i}
+                  className={`thumb ${i === currentImage ? 'active' : ''}`}
+                  onClick={() => setCurrentImage(i)}
+                >
+                  <img src={img} alt={`${item.name} ${i + 1}`} />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Item Info */}
+        <div className="item-info">
+          <div className="item-category-tag">{item.categories?.name || 'General'}</div>
+          <h1 className="item-title">{item.name}</h1>
+
+          <div className="item-status-row">
+            {item.available_quantity > 0 ? (
+              <span className="status-indicator available">
+                <CheckCircle size={16} /> {item.available_quantity} of {item.quantity} Available
+              </span>
+            ) : (
+              <span className="status-indicator unavailable">
+                <XCircle size={16} /> Out of Stock
+              </span>
+            )}
+            <span className="condition-tag">{item.condition}</span>
+          </div>
+
+          {item.location && (
+            <p className="item-location"><MapPin size={16} /> {item.location}</p>
+          )}
+
+          <div className="item-description">
+            <h3>Description</h3>
+            <p>{item.description || 'No description provided.'}</p>
+          </div>
+
+          {/* Custom Fields */}
+          {Object.keys(item.custom_data || {}).length > 0 && (
+            <div className="item-specs">
+              <h3>Specifications</h3>
+              <div className="specs-grid">
+                {Object.entries(item.custom_data).map(([key, value]) => (
+                  value && (
+                    <div key={key} className="spec-item">
+                      <span className="spec-label">{key}</span>
+                      <span className="spec-value">{value}</span>
+                    </div>
+                  )
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="item-actions">
+            {item.allow_borrowing && item.available_quantity > 0 && (
+              <button className="btn btn-primary btn-lg" onClick={() => setBorrowModal(true)}>
+                <ClipboardList size={18} /> Request to Borrow
+              </button>
+            )}
+            {item.allow_booking && (
+              <button className="btn btn-outline btn-lg" onClick={() => setBookingModal(true)}>
+                <Calendar size={18} /> Book for Later
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Borrow Modal */}
+      <Modal isOpen={borrowModal} onClose={() => setBorrowModal(false)} title="Borrow Request" size="lg">
+        <form onSubmit={handleBorrow} className="modal-form">
+          <div className="form-row">
+            <div className="form-group">
+              <label>Student ID *</label>
+              <input type="text" value={borrowForm.student_id} onChange={(e) => setBorrowForm({ ...borrowForm, student_id: e.target.value })} placeholder="e.g., 2024-0001" required />
+            </div>
+            <div className="form-group">
+              <label>Full Name *</label>
+              <input type="text" value={borrowForm.student_name} onChange={(e) => setBorrowForm({ ...borrowForm, student_name: e.target.value })} placeholder="Juan Dela Cruz" required />
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Email</label>
+              <input type="email" value={borrowForm.student_email} onChange={(e) => setBorrowForm({ ...borrowForm, student_email: e.target.value })} placeholder="student@school.edu" />
+            </div>
+            <div className="form-group">
+              <label>Department</label>
+              <input type="text" value={borrowForm.student_department} onChange={(e) => setBorrowForm({ ...borrowForm, student_department: e.target.value })} placeholder="e.g., IT Department" />
+            </div>
+          </div>
+          <div className="form-group">
+            <label>Purpose *</label>
+            <textarea value={borrowForm.purpose} onChange={(e) => setBorrowForm({ ...borrowForm, purpose: e.target.value })} placeholder="Why do you need this item?" rows={3} required />
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Quantity</label>
+              <input type="number" min={1} max={item.available_quantity} value={borrowForm.quantity} onChange={(e) => setBorrowForm({ ...borrowForm, quantity: parseInt(e.target.value) || 1 })} />
+            </div>
+            <div className="form-group">
+              <label>Borrow Date *</label>
+              <input type="date" value={borrowForm.borrow_date} onChange={(e) => setBorrowForm({ ...borrowForm, borrow_date: e.target.value })} required />
+            </div>
+            <div className="form-group">
+              <label>Return Date *</label>
+              <input type="date" value={borrowForm.expected_return_date} onChange={(e) => setBorrowForm({ ...borrowForm, expected_return_date: e.target.value })} required />
+            </div>
+          </div>
+          <div className="modal-actions">
+            <button type="button" className="btn btn-ghost" onClick={() => setBorrowModal(false)}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={submitting}>
+              {submitting ? 'Submitting...' : 'Submit Request'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Booking Modal */}
+      <Modal isOpen={bookingModal} onClose={() => setBookingModal(false)} title="Book Equipment" size="lg">
+        <form onSubmit={handleBooking} className="modal-form">
+          <div className="form-row">
+            <div className="form-group">
+              <label>Student ID *</label>
+              <input type="text" value={bookingForm.student_id} onChange={(e) => setBookingForm({ ...bookingForm, student_id: e.target.value })} placeholder="e.g., 2024-0001" required />
+            </div>
+            <div className="form-group">
+              <label>Full Name *</label>
+              <input type="text" value={bookingForm.student_name} onChange={(e) => setBookingForm({ ...bookingForm, student_name: e.target.value })} placeholder="Juan Dela Cruz" required />
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Email</label>
+              <input type="email" value={bookingForm.student_email} onChange={(e) => setBookingForm({ ...bookingForm, student_email: e.target.value })} placeholder="student@school.edu" />
+            </div>
+            <div className="form-group">
+              <label>Department</label>
+              <input type="text" value={bookingForm.student_department} onChange={(e) => setBookingForm({ ...bookingForm, student_department: e.target.value })} placeholder="e.g., IT Department" />
+            </div>
+          </div>
+          <div className="form-group">
+            <label>Purpose *</label>
+            <textarea value={bookingForm.purpose} onChange={(e) => setBookingForm({ ...bookingForm, purpose: e.target.value })} placeholder="What will you use this for?" rows={3} required />
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Quantity</label>
+              <input type="number" min={1} value={bookingForm.quantity} onChange={(e) => setBookingForm({ ...bookingForm, quantity: parseInt(e.target.value) || 1 })} />
+            </div>
+            <div className="form-group">
+              <label>Start Date *</label>
+              <input type="date" value={bookingForm.start_date} onChange={(e) => setBookingForm({ ...bookingForm, start_date: e.target.value })} required />
+            </div>
+            <div className="form-group">
+              <label>End Date *</label>
+              <input type="date" value={bookingForm.end_date} onChange={(e) => setBookingForm({ ...bookingForm, end_date: e.target.value })} required />
+            </div>
+          </div>
+          <div className="modal-actions">
+            <button type="button" className="btn btn-ghost" onClick={() => setBookingModal(false)}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={submitting}>
+              {submitting ? 'Submitting...' : 'Submit Booking'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  );
+}
