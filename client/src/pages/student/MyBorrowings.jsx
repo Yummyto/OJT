@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { borrowAPI, bookingsAPI } from '../../services/api.js';
-import { Search, ClipboardList, CalendarClock, Package, Plus, Mail } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { borrowAPI } from '../../services/api.js';
+import { Search, ClipboardList, Package, Plus, Mail, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import StatusBadge from '../../components/StatusBadge.jsx';
 import { format } from 'date-fns';
@@ -10,43 +10,47 @@ export default function MyBorrowings() {
   const [studentId, setStudentId] = useState('');
   const [searched, setSearched] = useState(false);
   const [borrows, setBorrows] = useState([]);
-  const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('borrows');
 
   const formatDate = (value) => value ? format(new Date(value), 'MMM d, yyyy') : 'Date to be confirmed';
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!studentId.trim()) return;
-    setLoading(true);
-    setSearched(true);
+  const loadTickets = async (identifier, showLoading = true) => {
+    if (!identifier.trim()) return;
+    if (showLoading) setLoading(true);
     try {
-      const [borrowRes, bookingRes] = await Promise.all([
-        borrowAPI.getByStudent(studentId.trim()),
-        bookingsAPI.getByStudent(studentId.trim())
-      ]);
+      const borrowRes = await borrowAPI.lookup(identifier);
       setBorrows(borrowRes.data);
-      setBookings(bookingRes.data);
     } catch (err) {
       toast.error('Failed to load your records');
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    setSearched(true);
+    await loadTickets(studentId.trim());
+  };
+
+  useEffect(() => {
+    if (!searched || !studentId.trim()) return undefined;
+    const refreshTimer = setInterval(() => loadTickets(studentId.trim(), false), 30000);
+    return () => clearInterval(refreshTimer);
+  }, [searched, studentId]);
 
   return (
     <div className="my-borrowings-page">
       <div className="borrowings-hero">
         <h1>My Tickets</h1>
-        <p>Search with your Student ID to check ticket status and replies from support.</p>
+        <p>Search with your Student ID or ticket number to check status and replies from support.</p>
 
         <form onSubmit={handleSearch} className="student-search-form">
           <div className="student-search-input">
             <Search size={20} />
             <input
               type="text"
-              placeholder="Enter your Student ID (e.g., 2024-0001)"
+              placeholder="Student ID or ticket number (e.g., BR-ABC123)"
               value={studentId}
               onChange={(e) => setStudentId(e.target.value)}
               required
@@ -61,27 +65,13 @@ export default function MyBorrowings() {
 
       {searched && !loading && (
         <div className="borrowings-content">
-          {/* Tabs */}
-          <div className="borrowings-tabs">
-            <button
-              className={`borrowings-tab ${activeTab === 'borrows' ? 'active' : ''}`}
-              onClick={() => setActiveTab('borrows')}
-            >
-              <ClipboardList size={18} />
-              Tickets ({borrows.length})
-            </button>
-            <button
-              className={`borrowings-tab ${activeTab === 'bookings' ? 'active' : ''}`}
-              onClick={() => setActiveTab('bookings')}
-            >
-              <CalendarClock size={18} />
-              Bookings ({bookings.length})
+          <div className="ticket-results-header">
+            <span className="text-muted text-sm">Replies refresh automatically.</span>
+            <button className="btn btn-ghost btn-sm" onClick={() => loadTickets(studentId.trim())}>
+              <RefreshCw size={14} /> Refresh
             </button>
           </div>
-
-          {/* Borrow Requests */}
-          {activeTab === 'borrows' && (
-            borrows.length === 0 ? (
+          {borrows.length === 0 ? (
               <div className="empty-state">
                 <ClipboardList size={48} />
                 <h3>No tickets found</h3>
@@ -118,48 +108,6 @@ export default function MyBorrowings() {
                   </div>
                 ))}
               </div>
-            )
-          )}
-
-          {/* Bookings */}
-          {activeTab === 'bookings' && (
-            bookings.length === 0 ? (
-              <div className="empty-state">
-                <CalendarClock size={48} />
-                <h3>No bookings</h3>
-                <p>You haven't made any bookings with this Student ID.</p>
-              </div>
-            ) : (
-              <div className="borrowings-list">
-                {bookings.map((b) => (
-                  <div key={b.id} className="borrowing-card">
-                    <div className="borrowing-card-left">
-                      <div className="borrowing-item-image">
-                        {b.items?.images?.length > 0 ? (
-                          <img src={b.items.images[0]} alt={b.items?.name} />
-                        ) : (
-                          <Package size={24} />
-                        )}
-                      </div>
-                      <div className="borrowing-info">
-                        <h4>{b.items?.name || 'Unknown Item'}</h4>
-                        <p className="borrowing-dates">
-                          {format(new Date(b.start_date), 'MMM d, yyyy')} → {format(new Date(b.end_date), 'MMM d, yyyy')}
-                        </p>
-                        <p className="borrowing-purpose">{b.purpose}</p>
-                        {b.admin_notes && (
-                          <p className="admin-note">📝 Admin: {b.admin_notes}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="borrowing-card-right">
-                      <StatusBadge status={b.status} />
-                      <span className="borrowing-qty">Qty: {b.quantity}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
           )}
         </div>
       )}

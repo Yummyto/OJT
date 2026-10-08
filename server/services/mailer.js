@@ -10,7 +10,7 @@ const transporter = hasMailConfig
     })
   : null;
 
-async function sendTicketEmail({ to, ticketNumber, subject, message }) {
+async function sendTicketEmail({ to, ticketNumber, subject, message, agentName }) {
   if (!transporter || !to) {
     console.warn('Ticket email skipped: configure SMTP_HOST, SMTP_USER, and SMTP_PASS in server/.env');
     return false;
@@ -18,9 +18,10 @@ async function sendTicketEmail({ to, ticketNumber, subject, message }) {
 
   await transporter.sendMail({
     from: process.env.MAIL_FROM || process.env.SMTP_USER,
+    replyTo: process.env.MAIL_FROM || process.env.SMTP_USER,
     to,
-    subject: `[${ticketNumber}] ${subject}`,
-    text: `${message}\n\nTicket: ${ticketNumber}`
+    subject: `[${ticketNumber}]${agentName ? ` [${agentName}]` : ''} ${subject}`,
+    text: `${message}\n\nTicket: ${ticketNumber}${agentName ? `\nReply from: ${agentName}` : ''}`
   });
   return true;
 }

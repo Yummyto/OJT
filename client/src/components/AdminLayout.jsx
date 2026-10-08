@@ -2,7 +2,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import {
   LayoutDashboard, Package, FolderOpen, ClipboardList,
-  CalendarClock, LogOut, GraduationCap, Menu, X
+  MessageSquareText, LogOut, GraduationCap, Menu, X
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -10,8 +10,8 @@ const navItems = [
   { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/admin/inventory', icon: Package, label: 'Inventory' },
   { to: '/admin/categories', icon: FolderOpen, label: 'Categories' },
-  { to: '/admin/borrow-requests', icon: ClipboardList, label: 'Borrow Requests' },
-  { to: '/admin/bookings', icon: CalendarClock, label: 'Bookings' },
+  { to: '/admin/borrow-requests', icon: ClipboardList, label: 'Ticket Requests' },
+  { to: '/admin/ticket-replies', icon: MessageSquareText, label: 'Ticket Replies' },
 ];
 
 export default function AdminLayout() {

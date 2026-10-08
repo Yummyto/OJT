@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { dashboardAPI } from '../../services/api.js';
 import {
-  Package, FolderOpen, ClipboardList, CalendarClock,
+  Package, FolderOpen, ClipboardList,
   AlertTriangle, TrendingUp, Clock, CheckCircle
 } from 'lucide-react';
 import StatusBadge from '../../components/StatusBadge.jsx';
@@ -65,13 +65,6 @@ export default function Dashboard() {
       gradient: 'linear-gradient(135deg, #14b8a6, #0d9488)'
     },
     {
-      label: 'Pending Bookings',
-      value: stats?.stats?.pendingBookings || 0,
-      icon: CalendarClock,
-      color: 'indigo',
-      gradient: 'linear-gradient(135deg, #6366f1, #4f46e5)'
-    },
-    {
       label: 'Overdue',
       value: stats?.stats?.overdueBorrows || 0,
       icon: AlertTriangle,
@@ -125,32 +118,6 @@ export default function Dashboard() {
               </div>
             ) : (
               <p className="empty-text">No recent requests</p>
-            )}
-          </div>
-        </div>
-
-        {/* Recent Bookings */}
-        <div className="dashboard-card">
-          <div className="card-header">
-            <h3><CalendarClock size={18} /> Recent Bookings</h3>
-          </div>
-          <div className="card-body">
-            {stats?.recentBookings?.length > 0 ? (
-              <div className="activity-list">
-                {stats.recentBookings.map((b) => (
-                  <div key={b.id} className="activity-item">
-                    <div className="activity-info">
-                      <p className="activity-title">{b.student_name}</p>
-                      <p className="activity-sub">
-                        {b.items?.name} — {format(new Date(b.start_date), 'MMM d')} to {format(new Date(b.end_date), 'MMM d')}
-                      </p>
-                    </div>
-                    <StatusBadge status={b.status} />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="empty-text">No recent bookings</p>
             )}
           </div>
         </div>

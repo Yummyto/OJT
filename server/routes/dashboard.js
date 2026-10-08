@@ -33,22 +33,9 @@ router.get('/stats', auth, async (req, res) => {
       .select('*', { count: 'exact', head: true })
       .eq('status', 'overdue');
 
-    // Pending bookings
-    const { count: pendingBookings } = await supabase
-      .from('bookings')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'pending');
-
     // Recent borrow requests
     const { data: recentBorrows } = await supabase
       .from('borrow_requests')
-      .select('*, items(id, name)')
-      .order('created_at', { ascending: false })
-      .limit(5);
-
-    // Recent bookings
-    const { data: recentBookings } = await supabase
-      .from('bookings')
       .select('*, items(id, name)')
       .order('created_at', { ascending: false })
       .limit(5);
@@ -68,11 +55,9 @@ router.get('/stats', auth, async (req, res) => {
         totalCategories: totalCategories || 0,
         pendingBorrows: pendingBorrows || 0,
         activeBorrows: activeBorrows || 0,
-        overdueBorrows: overdueBorrows || 0,
-        pendingBookings: pendingBookings || 0
+        overdueBorrows: overdueBorrows || 0
       },
       recentBorrows: recentBorrows || [],
-      recentBookings: recentBookings || [],
       lowStockItems: lowStockItems || []
     });
   } catch (err) {

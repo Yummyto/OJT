@@ -38,6 +38,32 @@ router.get('/', auth, async (req, res) => {
 });
 
 // GET /api/borrow-requests/student/:studentId — Get all requests by student ID
+// GET /api/borrow-requests/lookup/:identifier — Find tickets by Student ID or ticket number
+router.get('/lookup/:identifier', async (req, res) => {
+  try {
+    const identifier = decodeURIComponent(req.params.identifier).trim();
+    let { data, error } = await supabase
+      .from('borrow_requests')
+      .select('*, items(id, name, images, location)')
+      .eq('student_id', identifier)
+      .order('created_at', { ascending: false });
+
+    if (!error && data.length === 0) {
+      ({ data, error } = await supabase
+        .from('borrow_requests')
+        .select('*, items(id, name, images, location)')
+        .eq('ticket_number', identifier)
+        .order('created_at', { ascending: false }));
+    }
+
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    console.error('Lookup borrow requests error:', err);
+    res.status(500).json({ error: 'Failed to look up tickets.' });
+  }
+});
+
 router.get('/student/:studentId', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -85,7 +111,7 @@ router.post('/', async (req, res) => {
         student_department: department, department, requester_type, priority,
         ticket_category,
         purpose, quantity: quantity || 1,
-        borrow_date: null, expected_return_date: null, status: 'pending'
+        borrow_date: null, expected_return_date: null, status: 'open'
       }])
       .select('*, items(id, name, images)');
 
@@ -94,7 +120,7 @@ router.post('/', async (req, res) => {
       to: student_email,
       ticketNumber: data[0].ticket_number,
       subject: 'Ticket received',
-      message: `We received your ${ticket_category.replace('_', ' ')} request. Its current status is pending. Our support team will review it and reply by email.`
+      message: `We received your ${ticket_category.replace('_', ' ')} request. Its current status is open. Our support team will review it and reply by email.`
     });
     res.status(201).json(data[0]);
   } catch (err) {
@@ -106,7 +132,7 @@ router.post('/', async (req, res) => {
 // PUT /api/borrow-requests/:id/status — Update status (admin only)
 router.put('/:id/status', auth, async (req, res) => {
   try {
-    const { status, admin_notes } = req.body;
+    const { status, admin_notes, tags } = req.body;
     const validStatuses = ['pending', 'open', 'closed', 'approved', 'rejected', 'borrowed', 'returned', 'overdue'];
 
     if (!validStatuses.includes(status)) {
@@ -146,6 +172,11 @@ router.put('/:id/status', auth, async (req, res) => {
 
     const updateData = { status };
     if (admin_notes !== undefined) updateData.admin_notes = admin_notes;
+    if (Array.isArray(tags)) updateData.tags = tags.filter((tag) => typeof tag === 'string' && tag.trim()).map((tag) => tag.trim().slice(0, 40));
+    if (admin_notes && admin_notes.trim()) {
+      updateData.assigned_to = req.admin.id;
+      updateData.assigned_at = new Date().toISOString();
+    }
     if (status === 'returned') updateData.actual_return_date = new Date().toISOString().split('T')[0];
 
     const { data, error } = await supabase
@@ -160,7 +191,8 @@ router.put('/:id/status', auth, async (req, res) => {
         to: request.student_email,
         ticketNumber: request.ticket_number,
         subject: `Support replied (${status})`,
-        message: admin_notes
+        message: admin_notes,
+        agentName: req.admin.name
       });
     }
     res.json(data[0]);

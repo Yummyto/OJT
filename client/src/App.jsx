@@ -7,7 +7,7 @@ import Dashboard from './pages/admin/Dashboard.jsx';
 import Inventory from './pages/admin/Inventory.jsx';
 import Categories from './pages/admin/Categories.jsx';
 import BorrowRequests from './pages/admin/BorrowRequests.jsx';
-import Bookings from './pages/admin/Bookings.jsx';
+import TicketReplies from './pages/admin/TicketReplies.jsx';
 
 // Student pages
 import MyBorrowings from './pages/student/MyBorrowings.jsx';
@@ -36,7 +36,6 @@ export default function App() {
       {/* Student Routes */}
       <Route element={<StudentLayout />}>
         <Route path="/" element={<MyBorrowings />} />
-        <Route path="/my-borrowings" element={<MyBorrowings />} />
         <Route path="/submit-ticket" element={<SubmitTicket />} />
       </Route>
 
@@ -54,7 +53,7 @@ export default function App() {
         <Route path="inventory" element={<Inventory />} />
         <Route path="categories" element={<Categories />} />
         <Route path="borrow-requests" element={<BorrowRequests />} />
-        <Route path="bookings" element={<Bookings />} />
+        <Route path="ticket-replies" element={<TicketReplies />} />
       </Route>
 
       {/* Catch-all redirect */}

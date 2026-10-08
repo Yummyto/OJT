@@ -69,10 +69,9 @@ npm run dev
 | **Category Builder** | Create categories with configurable custom fields |
 | **Image Upload** | Upload photos to Supabase Storage |
 | **Borrow Requests** | Students request → Admin approves → Tracks status |
-| **Tool Booking** | Reserve equipment for future dates |
 | **Dashboard** | Stats, recent activity, low stock alerts |
 | **Student Portal** | Browse items, submit requests by Student ID |
-| **My Borrowings** | Look up borrowing history by Student ID |
+| **My Tickets** | Look up ticket status by Student ID or ticket number |
 
 ---
 

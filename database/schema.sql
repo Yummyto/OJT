@@ -55,7 +55,10 @@ CREATE TABLE borrow_requests (
   department VARCHAR(20) CHECK (department IN ('COT', 'COED', 'COHTM', 'Admin')),
   priority VARCHAR(10) DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
   ticket_category VARCHAR(30) DEFAULT 'borrow' CHECK (ticket_category IN ('borrow', 'tech_support', 'tool_borrow', 'manpower', 'other')),
-  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'open', 'closed', 'approved', 'rejected', 'borrowed', 'returned', 'overdue')),
+  assigned_to UUID REFERENCES admins(id) ON DELETE SET NULL,
+  assigned_at TIMESTAMPTZ,
+  tags TEXT[] DEFAULT '{}',
+  status VARCHAR(20) DEFAULT 'open' CHECK (status IN ('pending', 'open', 'closed', 'approved', 'rejected', 'borrowed', 'returned', 'overdue')),
   purpose TEXT,
   quantity INTEGER DEFAULT 1 CHECK (quantity >= 1),
   borrow_date DATE,
@@ -71,6 +74,9 @@ ALTER TABLE borrow_requests ADD COLUMN IF NOT EXISTS ticket_number VARCHAR(30) U
 ALTER TABLE borrow_requests ADD COLUMN IF NOT EXISTS requester_type VARCHAR(20) DEFAULT 'student';
 ALTER TABLE borrow_requests ADD COLUMN IF NOT EXISTS department VARCHAR(20);
 ALTER TABLE borrow_requests ADD COLUMN IF NOT EXISTS priority VARCHAR(10) DEFAULT 'medium';
+ALTER TABLE borrow_requests ADD COLUMN IF NOT EXISTS assigned_to UUID REFERENCES admins(id) ON DELETE SET NULL;
+ALTER TABLE borrow_requests ADD COLUMN IF NOT EXISTS assigned_at TIMESTAMPTZ;
+ALTER TABLE borrow_requests ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}';
 
 -- 5. BOOKINGS
 CREATE TABLE bookings (

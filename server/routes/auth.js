@@ -64,6 +64,22 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
+// GET /api/auth/agents — List admins who can own support tickets
+router.get('/agents', auth, async (_req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('admins')
+      .select('id, name, email')
+      .order('name', { ascending: true });
+
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    console.error('Get agents error:', err);
+    res.status(500).json({ error: 'Failed to fetch ticket agents.' });
+  }
+});
+
 // POST /api/auth/setup — Create first admin (only works if no admins exist)
 router.post('/setup', async (req, res) => {
   try {

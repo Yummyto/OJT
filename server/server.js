@@ -7,9 +7,9 @@ const authRoutes = require('./routes/auth');
 const categoryRoutes = require('./routes/categories');
 const itemRoutes = require('./routes/items');
 const borrowRoutes = require('./routes/borrowRequests');
-const bookingRoutes = require('./routes/bookings');
 const dashboardRoutes = require('./routes/dashboard');
 const uploadRoutes = require('./routes/upload');
+const { startInboxPolling } = require('./services/inbox');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -27,7 +27,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/items', itemRoutes);
 app.use('/api/borrow-requests', borrowRoutes);
-app.use('/api/bookings', bookingRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/upload', uploadRoutes);
 
@@ -44,4 +43,5 @@ app.use((err, _req, res, _next) => {
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
+  startInboxPolling();
 });

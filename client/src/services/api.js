@@ -37,6 +37,7 @@ api.interceptors.response.use(
 export const authAPI = {
   login: (email, password) => api.post('/auth/login', { email, password }),
   getMe: () => api.get('/auth/me'),
+  getAgents: () => api.get('/auth/agents'),
   setup: (email, password, name) => api.post('/auth/setup', { email, password, name }),
 };
 
@@ -68,20 +69,10 @@ export const itemsAPI = {
 export const borrowAPI = {
   getAll: (params) => api.get('/borrow-requests', { params }),
   getByStudent: (studentId) => api.get(`/borrow-requests/student/${studentId}`),
+  lookup: (identifier) => api.get(`/borrow-requests/lookup/${encodeURIComponent(identifier)}`),
   create: (data) => api.post('/borrow-requests', data),
-  updateStatus: (id, status, admin_notes) =>
-    api.put(`/borrow-requests/${id}/status`, { status, admin_notes }),
-};
-
-// ═══════════════════════════════════════════
-// BOOKINGS
-// ═══════════════════════════════════════════
-export const bookingsAPI = {
-  getAll: (params) => api.get('/bookings', { params }),
-  getByStudent: (studentId) => api.get(`/bookings/student/${studentId}`),
-  create: (data) => api.post('/bookings', data),
-  updateStatus: (id, status, admin_notes) =>
-    api.put(`/bookings/${id}/status`, { status, admin_notes }),
+  updateStatus: (id, status, admin_notes, tags) =>
+    api.put(`/borrow-requests/${id}/status`, { status, admin_notes, tags }),
 };
 
 // ═══════════════════════════════════════════
