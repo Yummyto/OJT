@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { itemsAPI, categoriesAPI, uploadAPI } from '../../services/api';
+import { itemsAPI, categoriesAPI, uploadAPI } from '../../services/api.js';
 import { Plus, Edit2, Trash2, Search, Package, Upload, X, Image } from 'lucide-react';
-import Modal from '../../components/Modal';
+import Modal from '../../components/Modal.jsx';
 import toast from 'react-hot-toast';
 
 export default function Inventory() {

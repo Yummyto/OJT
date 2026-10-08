@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { categoriesAPI } from '../../services/api';
+import { categoriesAPI } from '../../services/api.js';
 import { Plus, Edit2, Trash2, X, FolderOpen } from 'lucide-react';
-import Modal from '../../components/Modal';
+import Modal from '../../components/Modal.jsx';
 import toast from 'react-hot-toast';
 
 const FIELD_TYPES = ['text', 'number', 'textarea'];

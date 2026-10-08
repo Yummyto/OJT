@@ -1,22 +1,21 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './context/AuthContext';
+import { useAuth } from './context/AuthContext.jsx';
 
 // Admin pages
-import Login from './pages/admin/Login';
-import Dashboard from './pages/admin/Dashboard';
-import Inventory from './pages/admin/Inventory';
-import Categories from './pages/admin/Categories';
-import BorrowRequests from './pages/admin/BorrowRequests';
-import Bookings from './pages/admin/Bookings';
+import Login from './pages/admin/Login.jsx';
+import Dashboard from './pages/admin/Dashboard.jsx';
+import Inventory from './pages/admin/Inventory.jsx';
+import Categories from './pages/admin/Categories.jsx';
+import BorrowRequests from './pages/admin/BorrowRequests.jsx';
+import Bookings from './pages/admin/Bookings.jsx';
 
 // Student pages
-import BrowseItems from './pages/student/BrowseItems';
-import ItemDetails from './pages/student/ItemDetails';
-import MyBorrowings from './pages/student/MyBorrowings';
+import MyBorrowings from './pages/student/MyBorrowings.jsx';
+import SubmitTicket from './pages/student/SubmitTicket.jsx';
 
 // Layout
-import AdminLayout from './components/AdminLayout';
-import StudentLayout from './components/StudentLayout';
+import AdminLayout from './components/AdminLayout.jsx';
+import StudentLayout from './components/StudentLayout.jsx';
 
 function ProtectedRoute({ children }) {
   const { admin, loading } = useAuth();
@@ -36,9 +35,9 @@ export default function App() {
     <Routes>
       {/* Student Routes */}
       <Route element={<StudentLayout />}>
-        <Route path="/" element={<BrowseItems />} />
-        <Route path="/items/:id" element={<ItemDetails />} />
+        <Route path="/" element={<MyBorrowings />} />
         <Route path="/my-borrowings" element={<MyBorrowings />} />
+        <Route path="/submit-ticket" element={<SubmitTicket />} />
       </Route>
 
       {/* Admin Routes */}

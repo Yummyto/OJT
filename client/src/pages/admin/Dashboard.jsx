@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { dashboardAPI } from '../../services/api';
+import { dashboardAPI } from '../../services/api.js';
 import {
   Package, FolderOpen, ClipboardList, CalendarClock,
   AlertTriangle, TrendingUp, Clock, CheckCircle
 } from 'lucide-react';
-import StatusBadge from '../../components/StatusBadge';
+import StatusBadge from '../../components/StatusBadge.jsx';
 import { format } from 'date-fns';
 
 export default function Dashboard() {

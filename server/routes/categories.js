@@ -3,7 +3,7 @@ const supabase = require('../config/supabase');
 const { auth } = require('../middleware/auth');
 
 // GET /api/categories — List all categories with item counts
-router.get('/', async (_req, res) => {
+router.get('/', auth, async (_req, res) => {
   try {
     const { data: categories, error } = await supabase
       .from('categories')
@@ -37,7 +37,7 @@ router.get('/', async (_req, res) => {
 });
 
 // GET /api/categories/:id — Single category
-router.get('/:id', async (req, res) => {
+router.get('/:id', auth, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('categories')

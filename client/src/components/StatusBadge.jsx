@@ -1,6 +1,8 @@
 export default function StatusBadge({ status }) {
   const statusMap = {
     pending: { label: 'Pending', className: 'badge-warning' },
+    open: { label: 'Open', className: 'badge-info' },
+    closed: { label: 'Closed', className: 'badge-muted' },
     approved: { label: 'Approved', className: 'badge-info' },
     rejected: { label: 'Rejected', className: 'badge-danger' },
     borrowed: { label: 'Borrowed', className: 'badge-purple' },

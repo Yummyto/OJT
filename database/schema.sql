@@ -45,22 +45,32 @@ CREATE TABLE admins (
 -- 4. BORROW REQUESTS
 CREATE TABLE borrow_requests (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  ticket_number VARCHAR(30) UNIQUE,
   item_id UUID REFERENCES items(id) ON DELETE CASCADE,
   student_id VARCHAR(50) NOT NULL,
   student_name VARCHAR(255) NOT NULL,
-  student_email VARCHAR(255),
+  student_email VARCHAR(255) NOT NULL,
   student_department VARCHAR(255),
+  requester_type VARCHAR(20) DEFAULT 'student' CHECK (requester_type IN ('student', 'teacher', 'admin')),
+  department VARCHAR(20) CHECK (department IN ('COT', 'COED', 'COHTM', 'Admin')),
+  priority VARCHAR(10) DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
+  ticket_category VARCHAR(30) DEFAULT 'borrow' CHECK (ticket_category IN ('borrow', 'tech_support', 'tool_borrow', 'manpower', 'other')),
+  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'open', 'closed', 'approved', 'rejected', 'borrowed', 'returned', 'overdue')),
   purpose TEXT,
   quantity INTEGER DEFAULT 1 CHECK (quantity >= 1),
-  borrow_date DATE NOT NULL,
-  expected_return_date DATE NOT NULL,
+  borrow_date DATE,
+  expected_return_date DATE,
   actual_return_date DATE,
-  status VARCHAR(20) DEFAULT 'pending'
-    CHECK (status IN ('pending','approved','rejected','borrowed','returned','overdue')),
   admin_notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Ticket fields for databases created from an older version of this schema.
+ALTER TABLE borrow_requests ADD COLUMN IF NOT EXISTS ticket_number VARCHAR(30) UNIQUE;
+ALTER TABLE borrow_requests ADD COLUMN IF NOT EXISTS requester_type VARCHAR(20) DEFAULT 'student';
+ALTER TABLE borrow_requests ADD COLUMN IF NOT EXISTS department VARCHAR(20);
+ALTER TABLE borrow_requests ADD COLUMN IF NOT EXISTS priority VARCHAR(10) DEFAULT 'medium';
 
 -- 5. BOOKINGS
 CREATE TABLE bookings (

@@ -1,11 +1,12 @@
 const router = require('express').Router();
 const supabase = require('../config/supabase');
 const { auth } = require('../middleware/auth');
+const { sendTicketEmail } = require('../services/mailer');
 
 // GET /api/borrow-requests — List all (admin) or filter by student
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req, res) => {
   try {
-    const { status, student_id, page = 1, limit = 20 } = req.query;
+    const { status, priority, student_id, page = 1, limit = 20 } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
     let query = supabase
@@ -13,6 +14,7 @@ router.get('/', async (req, res) => {
       .select('*, items(id, name, images, location)', { count: 'exact' });
 
     if (status) query = query.eq('status', status);
+    if (priority) query = query.eq('priority', priority);
     if (student_id) query = query.eq('student_id', student_id);
 
     query = query
@@ -57,38 +59,43 @@ router.post('/', async (req, res) => {
   try {
     const {
       item_id, student_id, student_name, student_email,
-      student_department, purpose, quantity, borrow_date, expected_return_date
+      student_department, department, requester_type, priority,
+      ticket_category, purpose, quantity, borrow_date, expected_return_date
     } = req.body;
 
-    if (!item_id || !student_id || !student_name || !borrow_date || !expected_return_date) {
+    const validDepartments = ['COT', 'COED', 'COHTM', 'Admin'];
+    const validRequesterTypes = ['student', 'teacher', 'admin'];
+    const validPriorities = ['low', 'medium', 'high'];
+    const validTicketCategories = ['borrow', 'tech_support', 'tool_borrow', 'manpower', 'other'];
+
+    if (!student_id || !student_name || !student_email || !department || !requester_type || !priority || !ticket_category || !purpose) {
       return res.status(400).json({
-        error: 'Item, student ID, student name, borrow date, and return date are required.'
+        error: 'ID number, name, department, requester type, priority, ticket category, and request details are required.'
       });
     }
-
-    // Check item availability
-    const { data: item } = await supabase
-      .from('items')
-      .select('available_quantity, allow_borrowing, name')
-      .eq('id', item_id)
-      .single();
-
-    if (!item) return res.status(404).json({ error: 'Item not found.' });
-    if (!item.allow_borrowing) return res.status(400).json({ error: 'This item is not available for borrowing.' });
-    if (item.available_quantity < (quantity || 1)) {
-      return res.status(400).json({ error: 'Not enough items available.' });
-    }
-
+    if (!validDepartments.includes(department)) return res.status(400).json({ error: 'Invalid department.' });
+    if (!validRequesterTypes.includes(requester_type)) return res.status(400).json({ error: 'Invalid requester type.' });
+    if (!validPriorities.includes(priority)) return res.status(400).json({ error: 'Invalid priority.' });
+    if (!validTicketCategories.includes(ticket_category)) return res.status(400).json({ error: 'Invalid ticket category.' });
     const { data, error } = await supabase
       .from('borrow_requests')
       .insert([{
-        item_id, student_id, student_name, student_email,
-        student_department, purpose, quantity: quantity || 1,
-        borrow_date, expected_return_date, status: 'pending'
+        ticket_number: `BR-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+        item_id: null, student_id, student_name, student_email,
+        student_department: department, department, requester_type, priority,
+        ticket_category,
+        purpose, quantity: quantity || 1,
+        borrow_date: null, expected_return_date: null, status: 'pending'
       }])
       .select('*, items(id, name, images)');
 
     if (error) throw error;
+    await sendTicketEmail({
+      to: student_email,
+      ticketNumber: data[0].ticket_number,
+      subject: 'Ticket received',
+      message: `We received your ${ticket_category.replace('_', ' ')} request. Its current status is pending. Our support team will review it and reply by email.`
+    });
     res.status(201).json(data[0]);
   } catch (err) {
     console.error('Create borrow request error:', err);
@@ -100,7 +107,7 @@ router.post('/', async (req, res) => {
 router.put('/:id/status', auth, async (req, res) => {
   try {
     const { status, admin_notes } = req.body;
-    const validStatuses = ['pending', 'approved', 'rejected', 'borrowed', 'returned', 'overdue'];
+    const validStatuses = ['pending', 'open', 'closed', 'approved', 'rejected', 'borrowed', 'returned', 'overdue'];
 
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
@@ -148,6 +155,14 @@ router.put('/:id/status', auth, async (req, res) => {
       .select('*, items(id, name, images)');
 
     if (error) throw error;
+    if (admin_notes) {
+      await sendTicketEmail({
+        to: request.student_email,
+        ticketNumber: request.ticket_number,
+        subject: `Support replied (${status})`,
+        message: admin_notes
+      });
+    }
     res.json(data[0]);
   } catch (err) {
     console.error('Update borrow request error:', err);

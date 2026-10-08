@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { authAPI } from '../../services/api';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { authAPI } from '../../services/api.js';
 import { GraduationCap, Lock, Mail, Eye, EyeOff, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 

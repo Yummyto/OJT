@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { itemsAPI, borrowAPI, bookingsAPI } from '../../services/api';
+import { itemsAPI, borrowAPI, bookingsAPI } from '../../services/api.js';
 import {
   ArrowLeft, Package, MapPin, CheckCircle, XCircle,
   Calendar, ClipboardList, ChevronLeft, ChevronRight
 } from 'lucide-react';
-import Modal from '../../components/Modal';
+import Modal from '../../components/Modal.jsx';
 import toast from 'react-hot-toast';
 
 export default function ItemDetails() {
@@ -20,7 +20,8 @@ export default function ItemDetails() {
 
   const [borrowForm, setBorrowForm] = useState({
     student_id: '', student_name: '', student_email: '',
-    student_department: '', purpose: '', quantity: 1,
+    department: '', requester_type: 'student', priority: 'medium', ticket_category: 'borrow',
+    purpose: '', quantity: 1,
     borrow_date: '', expected_return_date: ''
   });
 
@@ -53,7 +54,7 @@ export default function ItemDetails() {
       await borrowAPI.create({ ...borrowForm, item_id: id });
       toast.success('Borrow request submitted! Please wait for admin approval.');
       setBorrowModal(false);
-      setBorrowForm({ student_id: '', student_name: '', student_email: '', student_department: '', purpose: '', quantity: 1, borrow_date: '', expected_return_date: '' });
+      setBorrowForm({ student_id: '', student_name: '', student_email: '', department: '', requester_type: 'student', priority: 'medium', ticket_category: 'borrow', purpose: '', quantity: 1, borrow_date: '', expected_return_date: '' });
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to submit request');
     } finally {
@@ -194,10 +195,14 @@ export default function ItemDetails() {
       {/* Borrow Modal */}
       <Modal isOpen={borrowModal} onClose={() => setBorrowModal(false)} title="Borrow Request" size="lg">
         <form onSubmit={handleBorrow} className="modal-form">
+          <div className="ticket-form-intro">
+            <span className="ticket-kicker">New request ticket</span>
+            <p>Tell us who you are and what you need. No account is required.</p>
+          </div>
           <div className="form-row">
             <div className="form-group">
-              <label>Student ID *</label>
-              <input type="text" value={borrowForm.student_id} onChange={(e) => setBorrowForm({ ...borrowForm, student_id: e.target.value })} placeholder="e.g., 2024-0001" required />
+              <label>ID Number *</label>
+              <input type="text" value={borrowForm.student_id} onChange={(e) => setBorrowForm({ ...borrowForm, student_id: e.target.value })} placeholder="School or employee ID" required />
             </div>
             <div className="form-group">
               <label>Full Name *</label>
@@ -206,12 +211,35 @@ export default function ItemDetails() {
           </div>
           <div className="form-row">
             <div className="form-group">
+              <label>Department *</label>
+              <select value={borrowForm.department} onChange={(e) => setBorrowForm({ ...borrowForm, department: e.target.value })} required>
+                <option value="">Select department</option>
+                <option value="COT">COT</option>
+                <option value="COED">COED</option>
+                <option value="COHTM">COHTM</option>
+                <option value="Admin">Admin</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>I am a *</label>
+              <select value={borrowForm.requester_type} onChange={(e) => setBorrowForm({ ...borrowForm, requester_type: e.target.value })} required>
+                <option value="student">Student</option>
+                <option value="teacher">Teacher</option>
+              </select>
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
               <label>Email</label>
               <input type="email" value={borrowForm.student_email} onChange={(e) => setBorrowForm({ ...borrowForm, student_email: e.target.value })} placeholder="student@school.edu" />
             </div>
             <div className="form-group">
-              <label>Department</label>
-              <input type="text" value={borrowForm.student_department} onChange={(e) => setBorrowForm({ ...borrowForm, student_department: e.target.value })} placeholder="e.g., IT Department" />
+              <label>Priority *</label>
+              <select value={borrowForm.priority} onChange={(e) => setBorrowForm({ ...borrowForm, priority: e.target.value })} required>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
             </div>
           </div>
           <div className="form-group">

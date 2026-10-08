@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { GraduationCap, Package, ClipboardList, Menu, X } from 'lucide-react';
+import { GraduationCap, ClipboardList, Ticket, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
 export default function StudentLayout() {
@@ -22,14 +22,7 @@ export default function StudentLayout() {
           </button>
 
           <nav className={`student-nav ${menuOpen ? 'open' : ''}`}>
-            <Link
-              to="/"
-              className={`student-nav-link ${location.pathname === '/' ? 'active' : ''}`}
-              onClick={() => setMenuOpen(false)}
-            >
-              <Package size={18} />
-              Browse Items
-            </Link>
+            <Link to="/" className={`student-nav-link ${location.pathname === '/' ? 'active' : ''}`} onClick={() => setMenuOpen(false)}><Ticket size={18} /> My Tickets</Link>
             <Link
               to="/my-borrowings"
               className={`student-nav-link ${location.pathname === '/my-borrowings' ? 'active' : ''}`}

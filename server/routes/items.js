@@ -3,7 +3,7 @@ const supabase = require('../config/supabase');
 const { auth } = require('../middleware/auth');
 
 // GET /api/items — List items with optional filters
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req, res) => {
   try {
     const { category_id, search, available, page = 1, limit = 20 } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
@@ -37,7 +37,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/items/:id — Single item with full details
-router.get('/:id', async (req, res) => {
+router.get('/:id', auth, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('items')

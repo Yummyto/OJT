@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { itemsAPI, categoriesAPI } from '../../services/api';
+import { itemsAPI, categoriesAPI } from '../../services/api.js';
 import { Search, Package, MapPin, Filter } from 'lucide-react';
 
 export default function BrowseItems() {

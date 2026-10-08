@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { borrowAPI, bookingsAPI } from '../../services/api';
-import { Search, ClipboardList, CalendarClock, Package } from 'lucide-react';
-import StatusBadge from '../../components/StatusBadge';
+import { borrowAPI, bookingsAPI } from '../../services/api.js';
+import { Search, ClipboardList, CalendarClock, Package, Plus, Mail } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import StatusBadge from '../../components/StatusBadge.jsx';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
@@ -12,6 +13,8 @@ export default function MyBorrowings() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('borrows');
+
+  const formatDate = (value) => value ? format(new Date(value), 'MMM d, yyyy') : 'Date to be confirmed';
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -35,8 +38,8 @@ export default function MyBorrowings() {
   return (
     <div className="my-borrowings-page">
       <div className="borrowings-hero">
-        <h1>My Borrowings & Bookings</h1>
-        <p>Enter your Student ID to view your borrowing history and booking status</p>
+        <h1>My Tickets</h1>
+        <p>Search with your Student ID to check ticket status and replies from support.</p>
 
         <form onSubmit={handleSearch} className="student-search-form">
           <div className="student-search-input">
@@ -53,6 +56,7 @@ export default function MyBorrowings() {
             {loading ? 'Searching...' : 'Look Up'}
           </button>
         </form>
+        <Link to="/submit-ticket" className="btn btn-secondary"><Plus size={16} /> Submit a new ticket</Link>
       </div>
 
       {searched && !loading && (
@@ -64,7 +68,7 @@ export default function MyBorrowings() {
               onClick={() => setActiveTab('borrows')}
             >
               <ClipboardList size={18} />
-              Borrow Requests ({borrows.length})
+              Tickets ({borrows.length})
             </button>
             <button
               className={`borrowings-tab ${activeTab === 'bookings' ? 'active' : ''}`}
@@ -80,8 +84,8 @@ export default function MyBorrowings() {
             borrows.length === 0 ? (
               <div className="empty-state">
                 <ClipboardList size={48} />
-                <h3>No borrow requests</h3>
-                <p>You haven't submitted any borrow requests with this Student ID.</p>
+                <h3>No tickets found</h3>
+                <p>No tickets were found for this Student ID.</p>
               </div>
             ) : (
               <div className="borrowings-list">
@@ -96,19 +100,20 @@ export default function MyBorrowings() {
                         )}
                       </div>
                       <div className="borrowing-info">
-                        <h4>{r.items?.name || 'Unknown Item'}</h4>
+                        <h4>{r.ticket_number || 'Ticket'} <span className="text-muted">· {r.ticket_category?.replaceAll('_', ' ') || 'support request'}</span></h4>
+                        <p className="text-muted text-sm">{r.items?.name || 'General support request'} · Opened {formatDate(r.created_at)}</p>
                         <p className="borrowing-dates">
-                          {format(new Date(r.borrow_date), 'MMM d, yyyy')} → {format(new Date(r.expected_return_date), 'MMM d, yyyy')}
+                          {r.borrow_date ? `${formatDate(r.borrow_date)} → ${formatDate(r.expected_return_date)}` : 'Support ticket · Status updates are sent by email'}
                         </p>
                         <p className="borrowing-purpose">{r.purpose}</p>
                         {r.admin_notes && (
-                          <p className="admin-note">📝 Admin: {r.admin_notes}</p>
+                          <p className="admin-note"><Mail size={14} /> Support reply: {r.admin_notes}</p>
                         )}
                       </div>
                     </div>
                     <div className="borrowing-card-right">
                       <StatusBadge status={r.status} />
-                      <span className="borrowing-qty">Qty: {r.quantity}</span>
+                      <span className="borrowing-qty">Qty: {r.quantity || 1}</span>
                     </div>
                   </div>
                 ))}

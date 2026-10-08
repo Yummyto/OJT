@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { bookingsAPI } from '../../services/api';
+import { bookingsAPI } from '../../services/api.js';
 import { CalendarClock, Check, X, MessageSquare } from 'lucide-react';
-import StatusBadge from '../../components/StatusBadge';
-import Modal from '../../components/Modal';
+import StatusBadge from '../../components/StatusBadge.jsx';
+import Modal from '../../components/Modal.jsx';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
